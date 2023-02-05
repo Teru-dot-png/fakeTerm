@@ -23,26 +23,38 @@ struct File
 struct FakeFolder
 {
     char *name;         // The name of the folder
+    char *path;         // The path of the folder
     struct File *files; // An array of File objects that are inside the folder
     int num_files;      // The number of files in the folder
+    struct FakeFolder *sub_folders; // An array of subdirectories inside the folder
+    int num_sub_folders;      // The number of subdirectories in the folder
 };
 
-// Global array of File objects
-struct File files[MAX_FILES];
-int num_files = 0; // Keep track of the number of files in the array
 
-// Global array of FakeFolder objects
-struct FakeFolder fake_folders[MAX_FOLDERS];
-int num_fake_folders = 0; // Keep track of the number of folders in the array
+// Current dir where we start 
+char *current_dir = "/";
+
+
+
+// Global array of fake files
+struct File *files = NULL;
+int num_files = 0;
+int file_capacity = 0;
+
+// Global array of fake folders
+struct FakeFolder fake_folders = NULL;
+int num_fake_folders = 0;
+
 
 // Function to add a fake file to the global array of files
 void add_file(char *name, char *type, int size, char *text)
 {
     // Check if the array is full
-    if (num_files == MAX_FILES)
+    if (num_files == file_capacity)
     {
-        printf("Error: Too many files\n");
-        return;
+        // If the array is full, increase its capacity
+        file_capacity = file_capacity == 0 ? 1 : file_capacity * 2;
+        files = realloc(files, file_capacity * sizeof(struct File));
     }
 
     // Create a new File object
@@ -53,8 +65,114 @@ void add_file(char *name, char *type, int size, char *text)
     file.text = text;
 
     // Add the File object to the global array of files
-    files[num_files] = file;
-    num_files++;
+    files[num_files++] = file;
+}
+
+// Function to add a fake folder to the global array of folders
+void add_folder(char *name, char *path)
+{
+    // Check if the array is full
+    if (num_fake_folders == MAX_FOLDERS)
+    {
+        printf("Error: Too many folders\n");
+        return;
+    }
+
+    // Create a new FakeFolder object
+    struct FakeFolder folder;
+    folder.name = name;
+    folder.path = path;
+    folder.files = NULL;
+    folder.num_files = 0;
+    folder.sub_folders = NULL;
+    folder.num_sub_folders = 0;
+
+    // Add the FakeFolder object to the global array of folders
+    fake_folders[num_fake_folders] = folder;
+    num_fake_folders++;
+}
+
+
+
+// Function to add a file to a folder
+void add_file_to_folder(char *folder_name, char *file_name, char *type, int size, char *text)
+{
+    // Get a pointer to the folder by its name
+    struct FakeFolder *folder = get_folder_by_name(folder_name);
+    if (!folder)
+    {
+        printf("Error: Folder '%s' not found\n", folder_name);
+        return;
+    }
+
+    // Check if the array of files in the folder is full
+    if (folder->num_files == MAX_FILES)
+    {
+        printf("Error: Too many files in folder '%s'\n", folder_name);
+        return;
+    }
+
+    // Create a new File object
+    struct File file;
+    file.name = file_name;
+    file.type = type;
+    file.size = size;
+    file.text = text;
+
+    // Add the File object to the array of files in the folder
+    folder->files[folder->num_files] = file;
+    folder->num_files++;
+}
+
+
+// Function to remove a file from a folder
+void remove_file_from_folder(char *folder_name, char *file_name)
+{
+    // Get a pointer to the folder by its name
+    struct FakeFolder *folder = get_folder_by_name(folder_name);
+    if (!folder)
+    {
+        printf("Error: Folder '%s' not found\n", folder_name);
+        return;
+    }
+
+    // Get a pointer to the file by its name
+    struct File *file = get_file_by_name_in_folder(folder, file_name);
+    if (!file)
+    {
+        printf("Error: File '%s' not found in folder '%s'\n", file_name, folder_name);
+        return;
+    }
+
+    // Remove the file from the array of files in the folder by shifting all the other files over
+    int file_index = file - folder->files;
+    for (int i = file_index; i < folder->num_files - 1; i++)
+    {
+        folder->files[i] = folder->files[i + 1];
+    }
+
+    // Decrement the number of files in the folder
+    folder->num_files--;
+}
+}
+
+// Function to get a pointer to a FakeFolder object by its path
+struct FakeFolder *get_folder_by_path(char *path)
+{
+    // Loop through the array of FakeFolder objects
+    for (int i = 0; i < num_fake_folders; i++)
+    {
+        // Get a pointer to the current FakeFolder object
+        struct FakeFolder *folder = &fake_folders[i];
+
+        // Check if the path of the current folder matches the given path
+        if (strcmp(folder->path, path) == 0)
+        {
+            // Return a pointer to the FakeFolder object
+            return folder;
+        }
+    }
+    return NULL;
 }
 
 // Function to get a pointer to a File object by its name
@@ -76,6 +194,7 @@ struct File *get_file_by_name(char *name)
     return NULL;
 }
 
+
 // Function to exit the program
 void exit_program()
 {
@@ -93,22 +212,38 @@ void exit_program()
 }
 
 // Function to list the contents of the current directory
-void list_directory_contents()
+void list_dir(char *folder_name)
 {
-    // Print the names and types of all fake files
-    for (int i = 0; i < num_files; i++)
+    // Get a pointer to the folder by its name
+    struct FakeFolder *folder = get_folder_by_name(folder_name);
+    if (!folder)
     {
-        struct File file = files[i];
-        printf("%s (%s)\n", file.name, file.type);
+        printf("Error: Folder '%s' not found\n", folder_name);
+        return;
     }
 
-    // Print the names of all fake folders
+    // Update the current directory
+    current_dir = folder_name;
+
+    // Print the contents of the folder (the names of the files and subfolders inside)
+    printf("Contents of folder '%s':\n", folder_name);
+    for (int i = 0; i < folder->num_files; i++)
+    {
+        struct File *file = &folder->files[i];
+        printf("- %s\n", file->name);
+    }
     for (int i = 0; i < num_fake_folders; i++)
     {
-        struct FakeFolder fake_folder = fake_folders[i];
-        printf("%s (folder)\n", fake_folder.name);
+        struct FakeFolder *subfolder = &fake_folders[i];
+        if (subfolder->parent == folder)
+        {
+            printf("- %s/\n", subfolder->name);
+        }
     }
+    printf("Current directory: %s\n", current_dir);
 }
+
+
 
 void print_file_contents(char *filename)
 {
@@ -135,78 +270,7 @@ void print_file_contents(char *filename)
     }
 }
 
-void add_fake_folder(char *name)
-{
-    if (num_fake_folders == MAX_FOLDERS)
-    {
-        printf("Error: Too many folders\n");
-        return;
-    }
 
-    // Create a new FakeFolder object
-    struct FakeFolder fake_folder;
-    fake_folder.name = name;
-    fake_folder.files = NULL;
-    fake_folder.num_files = 0;
-
-    // Add the FakeFolder object to the global array of fake folders
-    fake_folders[num_fake_folders] = fake_folder;
-    num_fake_folders++;
-}
-
-// Function to add a fake file to a fake folder
-void add_file_to_fake_folder(struct FakeFolder *fake_folder, char *name, char *type, int size, char *text)
-{
-    // Check if the folder is full
-    if (fake_folder->num_files == MAX_FILES)
-    {
-        printf("Error: Too many files in folder\n");
-        return;
-    }
-
-    // Check if the folder already has an array of File objects
-    if (fake_folder->files == NULL)
-    {
-        // Allocate memory for an array of File objects
-        fake_folder->files = malloc(sizeof(struct File) * MAX_FILES);
-
-        // Check if the allocation was successful
-        if (fake_folder->files == NULL)
-        {
-            printf("Error: Failed to allocate memory for file array\n");
-            return;
-        }
-    }
-
-    // Create a new File object
-    struct File file;
-    file.name = name;
-    file.type = type;
-    file.size = size;
-    file.text = text;
-
-    // Add the File object to the array of files in the folder
-    fake_folder->files[fake_folder->num_files] = file;
-    fake_folder->num_files++;
-}
-
-void create_fake_folder(char *name)
-{
-    // Check if the maximum number of fake folders has been reached
-    if (num_fake_folders == MAX_FOLDERS)
-    {
-        printf("Error: Too many folders\n");
-        return;
-    }
-
-    // Create a new FakeFolder object and add it to the global array of fake folders
-    struct FakeFolder fake_folder;
-    fake_folder.name = name;
-    fake_folder.files = malloc(sizeof(struct File) * MAX_FILES);
-    fake_folder.num_files = 0;
-    fake_folders[num_fake_folders] = fake_folder;
-    num_fake_folders++;
-}
 
 void print_current_directory()
 {
