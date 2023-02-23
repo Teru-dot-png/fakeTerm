@@ -1,3 +1,11 @@
+//! In that case, i can create a "virtual" file system within the program using a data
+//! structure such as a tree. Each node in the tree would represent a folder or file, and would
+//! contain information about its name, location, and contents. When a user creates a file or
+//! folder in the program, i can add a corresponding node to the tree. When the user tries
+//! to access a file or folder, the program can search the tree for the corresponding node.
+//*
+//*
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -22,19 +30,16 @@ struct File
 // Data structure for a fake folder
 struct FakeFolder
 {
-    char *name;         // The name of the folder
-    char *path;         // The path of the folder
-    struct File *files; // An array of File objects that are inside the folder
-    int num_files;      // The number of files in the folder
+    char *name;                     // The name of the folder
+    char *path;                     // The path of the folder
+    struct File *files;             // An array of File objects that are inside the folder
+    int num_files;                  // The number of files in the folder
     struct FakeFolder *sub_folders; // An array of subdirectories inside the folder
-    int num_sub_folders;      // The number of subdirectories in the folder
+    int num_sub_folders;            // The number of subdirectories in the folder
 };
 
-
-// Current dir where we start 
+// Current dir where we start
 char *current_dir = "/";
-
-
 
 // Global array of fake files
 struct File *files = NULL;
@@ -44,7 +49,6 @@ int file_capacity = 0;
 // Global array of fake folders
 struct FakeFolder fake_folders = NULL;
 int num_fake_folders = 0;
-
 
 // Function to add a fake file to the global array of files
 void add_file(char *name, char *type, int size, char *text)
@@ -92,8 +96,6 @@ void add_folder(char *name, char *path)
     num_fake_folders++;
 }
 
-
-
 // Function to add a file to a folder
 void add_file_to_folder(char *folder_name, char *file_name, char *type, int size, char *text)
 {
@@ -123,7 +125,6 @@ void add_file_to_folder(char *folder_name, char *file_name, char *type, int size
     folder->files[folder->num_files] = file;
     folder->num_files++;
 }
-
 
 // Function to remove a file from a folder
 void remove_file_from_folder(char *folder_name, char *file_name)
@@ -194,7 +195,6 @@ struct File *get_file_by_name(char *name)
     return NULL;
 }
 
-
 // Function to exit the program
 void exit_program()
 {
@@ -243,8 +243,6 @@ void list_dir(char *folder_name)
     printf("Current directory: %s\n", current_dir);
 }
 
-
-
 void print_file_contents(char *filename)
 {
     // Get a pointer to the File object with the given name
@@ -269,8 +267,6 @@ void print_file_contents(char *filename)
         printf("This is the contents of a %s file\n", file->type);
     }
 }
-
-
 
 void print_current_directory()
 {

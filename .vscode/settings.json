@@ -1,4 +1,7 @@
 {
     "debug.showSubSessionsInToolBar": true,
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.associations": {
+        "stdlib.h": "c"
+    }
 }
