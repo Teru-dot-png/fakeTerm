@@ -1,19 +1,18 @@
-// this a test for file node visualization
+// this a program that generates a linked list of random nodes for a fake terminal
 
 // includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <SDL2/SDL.h>
 // defines and typedefs
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
 
 typedef struct node
 {
-    float x;           // x  coordinates of the node
-    float y;           // z coordinates of the node
+    float x;           // x coordinates of the node
+    float y;           // y coordinates of the node
     char *name;        // name of the file or folder
     int is_folder;     // 1 if folder, 0 if file
     struct node *next; // pointer to the next node
@@ -48,41 +47,59 @@ void add_node(node **head, node *new_node)
     }
 }
 
-// function generates a linked list of random nodes with the given number of nodes
+// function generates a linked list of nodes in the structure of a linux file system starting with the main node "/" and the child nodes "home", "usr", "etc", "bin", "sbin", "var", "tmp", "opt", "lib", "lib64", "media", "mnt", "srv", "boot", "dev", "proc", "sys"
 void generate_random_nodes(node **head, int num_nodes)
 {
-    char *filenames[] = {"file1", "file2", "file3", "file4", "file5", "file6", "file7", "file8", "file9", "file10"};
-    char *folder_names[] = {"folder1", "folder2", "folder3", "folder4", "folder5", "folder6", "folder7", "folder8", "folder9", "folder10"};
+    // create the main node
+    node *main_node = create_node("/", 1);
+    add_node(head, main_node);
+
+    // create the child nodes
+    char *child_nodes[] = {"home", "usr", "etc", "bin", "sbin", "var", "tmp", "opt", "lib", "lib64", "media", "mnt", "srv", "boot", "dev", "proc", "sys"};
+    for (int i = 0; i < 17; i++)
+    {
+        node *new_node = create_node(child_nodes[i], 1);
+        add_node(head, new_node);
+    }
+
+    // create the random nodes inside the child nodes
     srand(time(NULL));
     for (int i = 0; i < num_nodes; i++)
     {
-        int is_folder = rand() % 2;
-        char *name;
-        if (is_folder)
+        int random = rand() % 17;
+        node *current = *head;
+        for (int j = 0; j < random; j++)
         {
-            name = folder_names[rand() % 10];
+            current = current->next;
         }
-        else
-        {
-            name = filenames[rand() % 10];
-        }
-        node *new_node = create_node(name, is_folder);
-        add_node(head, new_node);
+        node *new_node = create_node("file", 0);
+        add_node(&current, new_node);
     }
 }
-// function prints the names of the nodes in the linked list
+
+// function prints the names of the nodes in the linked list in the style of the command "tree"
 void print_nodes(node *head)
 {
-    node *current = head;
-    while (current != NULL)
+    if (head == NULL)
     {
-        printf("%s", current->name);
-        if (current->is_folder)
+        return;
+    }
+    else
+    {
+        node *current = head;
+        while (current != NULL)
         {
-            printf("/");
+            if (current->is_folder == 1)
+            {
+                printf("|- %s\n", current->name);
+                print_nodes(current->next); // recursively print child nodes
+            }
+            else
+            {
+                printf("|-- %s\n", current->name);
+            }
+            current = current->next;
         }
-        printf("");
-        current = current->next;
     }
 }
 
@@ -93,79 +110,5 @@ int main(int argc, char *argv[])
     generate_random_nodes(&head, 10);
     print_nodes(head);
 
-    SDL_Window *window = NULL;
-    SDL_Renderer *renderer = NULL;
-    SDL_Event event;
-    int running = 1;
-    int i;
-
-    srand(time(NULL)); // seed random number generator with current time
-
-    // initialize SDL video subsystem
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-        fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
-        exit(1);
-    }
-
-    // create a window
-    window = SDL_CreateWindow("Node Visualization", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-    if (!window)
-    {
-        fprintf(stderr, "Could not create window: %s\n", SDL_GetError());
-        exit(1);
-    }
-
-    // create a renderer for the window
-    renderer = SDL_CreateRenderer(window, -1, 0);
-    if (!renderer)
-    {
-        fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError());
-        exit(1);
-    }
-
-    // generate random node positions and store in linked list
-    node *current = head;
-    while (current != NULL)
-    {
-        current->x = (float)(rand() % WINDOW_WIDTH);
-        current->y = (float)(rand() % WINDOW_HEIGHT);
-        current = current->next;
-    }
-
-    // render node and connections
-    while (running)
-    {
-        // process events
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-            {
-                running = 0;
-            }
-        }
-
-        // clear screen
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderClear(renderer);
-
-        // render nodes
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        node *current = head;
-        while (current != NULL)
-        {
-            SDL_Rect rect = {(int)current->x - 5, (int)current->y - 5, 10, 10};
-            SDL_RenderDrawRect(renderer, &rect);
-            current = current->next;
-        }
-
-        // present renderer to window
-        SDL_RenderPresent(renderer);
-    }
-
-    // cleanup
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
     return 0;
 }
