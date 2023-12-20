@@ -5,18 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-// defines and typedefs
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 480
 
-typedef struct node
-{
-    float x;           // x coordinates of the node
-    float y;           // y coordinates of the node
-    char *name;        // name of the file or folder
-    int is_folder;     // 1 if folder, 0 if file
-    struct node *next; // pointer to the next node
-} node;                // typedef for struct node
+// defines and typedefs
+
+
+typedef struct node {
+    int is_folder;
+    char *name;
+    struct node *next;      // next sibling
+    struct node *children; // first child
+} node;                   // typedef for struct node
 
 // function creates a new node with the given name and is_folder value
 node *create_node(char *name, int is_folder)
@@ -47,68 +45,56 @@ void add_node(node **head, node *new_node)
     }
 }
 
-// function generates a linked list of nodes in the structure of a linux file system starting with the main node "/" and the child nodes "home", "usr", "etc", "bin", "sbin", "var", "tmp", "opt", "lib", "lib64", "media", "mnt", "srv", "boot", "dev", "proc", "sys"
-void generate_random_nodes(node **head, int num_nodes)
-{
-    // create the main node
-    node *main_node = create_node("/", 1);
-    add_node(head, main_node);
 
-    // create the child nodes
-    char *child_nodes[] = {"home", "usr", "etc", "bin", "sbin", "var", "tmp", "opt", "lib", "lib64", "media", "mnt", "srv", "boot", "dev", "proc", "sys"};
-    for (int i = 0; i < 17; i++)
-    {
-        node *new_node = create_node(child_nodes[i], 1);
-        add_node(head, new_node);
-    }
 
-    // create the random nodes inside the child nodes
-    srand(time(NULL));
-    for (int i = 0; i < num_nodes; i++)
-    {
-        int random = rand() % 17;
-        node *current = *head;
-        for (int j = 0; j < random; j++)
-        {
-            current = current->next;
+
+
+
+// print_default is a function that takes a node from a linked list as an argument and prints its name. 
+// allowing you to customize how nodes are printed without modifying the print_nodes function itself
+void print_default(node* n, int depth) {
+    if (depth == 0) {
+        printf("/\n");
+    } else if (n->is_folder == 1) {
+        for(int i = 0; i < depth; i++) {
+            printf("  "); // print two spaces for each depth level
         }
-        node *new_node = create_node("file", 0);
-        add_node(&current, new_node);
+        printf("|- %s\n", n->name);
+    } else {
+        for(int i = 0; i < depth; i++) {
+            printf("  "); // print two spaces for each depth level
+        }
+        printf("|-- %s\n", n->name);
     }
 }
 
-// function prints the names of the nodes in the linked list in the style of the command "tree"
-void print_nodes(node *head)
-{
-    if (head == NULL)
-    {
+
+// function prints the names of the nodes in the linked tree list in the style of the command "tree"
+void print_nodes(node *head, print_func print, int depth) {
+    if (head == NULL) {
         return;
     }
-    else
-    {
-        node *current = head;
-        while (current != NULL)
-        {
-            if (current->is_folder == 1)
-            {
-                printf("|- %s\n", current->name);
-                print_nodes(current->next); // recursively print child nodes
+
+    node *current = head;
+    while (current != NULL) {
+        if (current->name == NULL) {
+            printf("Error: Node has no name.\n");
+        } else {
+            print(current, depth);
+            if (current->is_folder == 1) {
+                print_nodes(current->children, print, depth + 1); // recursively print child nodes
             }
-            else
-            {
-                printf("|-- %s\n", current->name);
-            }
-            current = current->next;
         }
+
+        current = current->next;
     }
 }
 
-// main function
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     node *head = NULL;
-    generate_random_nodes(&head, 10);
-    print_nodes(head);
+    // Add nodes to your list here
+    // ...
+    print_nodes(head, print_default, 0);
 
     return 0;
 }
