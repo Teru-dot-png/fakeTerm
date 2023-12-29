@@ -345,6 +345,21 @@ int main(int argc, char *argv[])
          ├── schoolstuff.pdf
          └── Cream.png
 
+    but for some reason the terminalX function doesn't want to list the nodes correctly
+      Root
+       ├ Node: Verry funny jokes.txt
+       ├ Node: Nobromu.exe
+       ├ Node: CSteam.png
+       └ Node: Not-Lewd-Folder
+          ├ Node: Cream.png
+          ├ Node: schoolstuff.pdf
+          └ Node: 2am.png
+          ├ Node: schoolstuff.pdf
+          └ Node: 2am.png
+          └ Node: 2am.png
+
+so i will leave it like this for now :(
+
      */
 
     terminalX(head);
