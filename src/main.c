@@ -11,6 +11,7 @@
 #define MAX_TYPE_LENGTH 3
 #define MAX_SIZE 1000
 #define MAX_CONTENT_LENGTH 2000
+#define MAX_CHILDREN 200
 
 typedef struct node
 {
@@ -20,6 +21,7 @@ typedef struct node
     char *name;
     char *content;         // content of the file
     struct node *next;     // next sibling
+    int num_children;      // number of children
     struct node *children; // first child
 } node;                    // typedef for struct node
 
@@ -32,6 +34,7 @@ node *create_node(char *name, int is_folder, char *type, int size, char *content
     new_node->name = malloc(MAX_NAME_LENGTH * sizeof(char));
     new_node->type = malloc(MAX_TYPE_LENGTH * sizeof(char));
     new_node->content = malloc(MAX_CONTENT_LENGTH * sizeof(char));
+
 
     // set the values for size type and name
     strcpy(new_node->name, name);
@@ -100,118 +103,176 @@ void move_node(node **head, node *parent, node *child)
     parent->children = child;
 }
 
-// this function will search for  a node with the given name and return it
+/**
+ * @brief Searches for a node with the given name and returns it.
+ * 
+ * This function searches for a node with the given name in the list starting from the given head node.
+ * 
+ * @param head The head node of the linked list.
+ * @param name The name to search for.
+ * @return The node with the given name, or NULL if not found.
+ */
 node *find_node(node *head, char *name)
 {
+    // this is the current node
     node *current = head;
+    // while the current node is not null
     while (current != NULL)
     {
+        // if the current node has the same name as the one we are searching for then return it
         if (strcmp(current->name, name) == 0)
         {
+            // return the current node
             return current;
         }
+        // if we didn't find the node then go to the next one
         current = current->next;
     }
+    // if we didn't find the node then return null
     return NULL;
 }
 
-void list_nodes(node *current, int level, int is_last, int debug)
+//prototype of the list_children function
+void list_children(node *head);
+
+
+/**
+ * @brief Lists the nodes in a tree structure.
+ * 
+ * This function recursively traverses the tree starting from the given head node and prints the nodes in a tree structure.
+ * It prints each node's name and indents it based on its level in the tree.
+ * If a node is a folder, it also lists its children nodes.
+ * 
+ * @param head The head node of the tree.
+ * @param level The level of the current node in the tree.
+ */
+void list_nodes(node *head)
 {
-    if (current == NULL)
+    // this is the current node
+    node *current = head;
+    // while the current node is not null
+    while (current != NULL)
     {
-        if (debug)
+        // indent the current node based on 1 level
+        for (int i = 0; i < 1; i++)
         {
-            printf("Debug: current is NULL\n");
+            printf("│   ");
         }
-        return;
-    }
 
-    if (debug)
-    {
-        printf("Debug: current->name = %s, level = %d, is_last = %d\n", current->name, level, is_last);
-    }
+        if (current->is_folder)
+        {
+            // set ansi color to yellow
+            printf("\033[0;33m");
+            // print the current node
+            printf("├ Folder: %s\n", current->name);
+            // reset ansi color
+            printf("\033[0m");
+        }
+        else
+        {
+        // print the current node
+        printf("├ Node: %s\n", current->name);
+        }
 
-    for (int i = 0; i < level - 1; i++)
-    {
-        printf("│   "); // Indentation to show the level of the node
-    }
-    if (level > 0)
-    {
-        printf(is_last && current->next == NULL ? "└ " : "├ ");
-    }
-    printf("Node: %s\n", current->name);
-
-    // Recursively print the children of the node, if children exist
-    if (current->children != NULL)
-    {
-        if (debug)
+        // if the current node is a folder then list it's children
+        if (current->is_folder)
         {
-            printf("Debug: current->children is not NULL\n");
+            //set ansi color to blue
+            printf("\033[0;34m");
+            // list the children of the current node
+            list_children(current->children);
+            // reset ansi color
+            printf("\033[0m");
         }
-        node *child = current->children;
-        while (child != NULL)
-        {
-            if (debug)
-            {
-                printf("Debug: child->name = %s\n", child->name);
-            }
-            list_nodes(child, level + 1, child->next == NULL, debug);
-            child = child->next; // Update child pointer to child->next
-        }
-    }
-    else
-    {
-        if (debug)
-        {
-            printf("Debug: current->children is NULL\n");
-        }
-    }
-
-    // Recursively print the siblings of the node
-    if (current->next != NULL && !is_last)
-    {
-        if (debug)
-        {
-            printf("Debug: current->next is not NULL and is_last is false\n");
-        }
-        list_nodes(current->next, level, current->next->next == NULL, debug);
-    }
-    else
-    {
-        if (debug)
-        {
-            printf("Debug: current->next is NULL or is_last is true\n");
-        }
+        // go to the next node
+        current = current->next;
     }
 }
 
-// this function will simulate a terminal that will let you navigate through the nodes and inspect them plus it will let you create new nodes
+
+// list children of a node
+void list_children(node *head)
+{
+    // this is the current node
+    node *current = head;
+    // while the current node is not null
+    while (current != NULL)
+    {
+        // indent the current node based on 1 level
+        for (int i = 0; i < 1; i++)
+        {
+            printf("│   ");
+        }
+
+        if (current->is_folder)
+        {
+            // set ansi color to yellow
+            printf("\033[0;33m");
+            // print the current node
+            printf(" ├ Folder: %s\n", current->name);
+            // reset ansi color
+            printf("\033[0m");
+        }
+        else
+        {
+        // print the current node
+        printf(" ├ Node: %s\n", current->name);
+        }
+
+        // if the current node is a folder then list it's children
+        if (current->is_folder)
+        {
+            //set ansi color to blue
+            printf("\033[0;34m");
+            // list the children of the current node
+            list_children(current->children);
+            // reset ansi color
+            printf("\033[0m");
+        }
+        // go to the next node
+        current = current->next;
+    }
+}
+
+
+
+/**
+ * @brief Executes a terminal program with various options.
+ *
+ * This function allows the user to perform different operations on a linked list of nodes.
+ * The available options include counting nodes, displaying a tree structure, adding a new node,
+ * moving a node to a different parent, inspecting a node, and exiting the program.
+ *
+ * @param head A pointer to the head of the linked list of nodes.
+ */
 void terminalX(node *head)
 {
+    // theese are the variables for the "terminal"
     int choice, debuginfo;
     char type[50];
     int is_folder, size, level;
     char content[1000];
+    node *current = head;
+    node *parent = NULL;
 
+
+    // this is the main loop of the "terminal"
     while (1)
     {
-        printf("\n\n\n\n1. Count nodes\n2. List nodes\n3. Add node\n4. Move node\n5. Inspect node\n6. Exit\nEnter your choice: ");
+        printf("\n\n\n\n1. Count nodes\n2. tree nodes\n3. Add node\n4. Move node\n5. Inspect noden\n6. Current dir Node \n7. Exit\nEnter your choice: ");
         scanf("%d", &choice);
 
         switch (choice)
         {
-        case 1:
+        case 1: // count nodes
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nNumber of nodes: %d\n", count_nodes(head));
             break;
-        case 2:
+        case 2: // tree nodes
             printf("\n\n\n\n\n\n\n\n\n\n\n");
-            printf("Enter a level of depth: ");
-            scanf("%d", &level);
-            printf("do you want to see the debug info (1 for yes, 0 for no): ");
-            scanf("%d", &debuginfo);
-            list_nodes(head, level, 0, debuginfo);
+            printf("Root\n");
+            list_nodes(current);
             break;
-        case 3:
+        case 3: // add node
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nCreating\n");
             // ask for the name of the node
             printf("Enter node name: ");
@@ -229,6 +290,7 @@ void terminalX(node *head)
                 printf("Enter node content: ");
                 scanf("%s", content);
             }
+            
 
             // size generation form 1 to 1000
             printf("generating a random size...\n");
@@ -242,7 +304,7 @@ void terminalX(node *head)
             printf("Node added successfully.\n");
             break;
 
-        case 4:
+        case 4: // move node
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMoving\n");
 
             printf("Enter the name of the node you want to move: ");
@@ -266,7 +328,7 @@ void terminalX(node *head)
             move_node(&head, parent, child);
             printf("Node moved successfully.\n");
             break;
-        case 5:
+        case 5: // inspect node
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ninspect\n");
             printf("Enter the name of the node you want to inspect: ");
             scanf("%s", name);
@@ -280,17 +342,27 @@ void terminalX(node *head)
             printf("Node name: %s\n", node->name);
             printf("Node type: %s\n", node->type);
             printf("Node size: %d\n", node->size);
-            printf("Node content: %s\n", node->content);
+            printf("       Node content \n[%s]\n", node->content);
             break;
+        case 6: // move between head and children
+        printf("choose a node to move in: ");
+        scanf("%s", name);
+        printf("\n");
+        parent = find_node(head, name);
+        terminalX(parent);
 
-        case 6:
+        case 7: // exit
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nExiting...\n");
             return;
-        default:
-            printf("\n\n\n\n\n\n\n\n\n\nInvalid choice. Please enter a number between 1 and 4.\n");
+        default: // invalid choice
+            printf("\n\n\n\n\n\n\n\n\n\nInvalid choice. Please enter a number between 1 and 7.\n");
         }
     }
 }
+
+
+
+
 
 int main(int argc, char *argv[])
 {
@@ -358,8 +430,7 @@ int main(int argc, char *argv[])
           └ Node: 2am.png
           └ Node: 2am.png
 
-so i will leave it like this for now :(
-
+    so i will leave it like this for now :(
      */
 
     terminalX(head);
