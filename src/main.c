@@ -35,7 +35,6 @@ node *create_node(char *name, int is_folder, char *type, int size, char *content
     new_node->type = malloc(MAX_TYPE_LENGTH * sizeof(char));
     new_node->content = malloc(MAX_CONTENT_LENGTH * sizeof(char));
 
-
     // set the values for size type and name
     strcpy(new_node->name, name);
     new_node->is_folder = is_folder;
@@ -105,9 +104,9 @@ void move_node(node **head, node *parent, node *child)
 
 /**
  * @brief Searches for a node with the given name and returns it.
- * 
+ *
  * This function searches for a node with the given name in the list starting from the given head node.
- * 
+ *
  * @param head The head node of the linked list.
  * @param name The name to search for.
  * @return The node with the given name, or NULL if not found.
@@ -132,17 +131,16 @@ node *find_node(node *head, char *name)
     return NULL;
 }
 
-//prototype of the list_children function
+// prototype of the list_children function
 void list_children(node *head);
-
 
 /**
  * @brief Lists the nodes in a tree structure.
- * 
+ *
  * This function recursively traverses the tree starting from the given head node and prints the nodes in a tree structure.
  * It prints each node's name and indents it based on its level in the tree.
  * If a node is a folder, it also lists its children nodes.
- * 
+ *
  * @param head The head node of the tree.
  * @param level The level of the current node in the tree.
  */
@@ -153,11 +151,6 @@ void list_nodes(node *head)
     // while the current node is not null
     while (current != NULL)
     {
-        // indent the current node based on 1 level
-        for (int i = 0; i < 1; i++)
-        {
-            printf("│   ");
-        }
 
         if (current->is_folder)
         {
@@ -170,14 +163,14 @@ void list_nodes(node *head)
         }
         else
         {
-        // print the current node
-        printf("├ Node: %s\n", current->name);
+            // print the current node
+            printf("├ %s %s %dMB\n", current->name, current->type, current->size);
         }
 
         // if the current node is a folder then list it's children
         if (current->is_folder)
         {
-            //set ansi color to blue
+            // set ansi color to blue
             printf("\033[0;34m");
             // list the children of the current node
             list_children(current->children);
@@ -188,7 +181,6 @@ void list_nodes(node *head)
         current = current->next;
     }
 }
-
 
 // list children of a node
 void list_children(node *head)
@@ -209,20 +201,20 @@ void list_children(node *head)
             // set ansi color to yellow
             printf("\033[0;33m");
             // print the current node
-            printf(" ├ Folder: %s\n", current->name);
+            printf("  ├ Folder: %s\n", current->name);
             // reset ansi color
             printf("\033[0m");
         }
         else
         {
-        // print the current node
-        printf(" ├ Node: %s\n", current->name);
+            // print the current node
+            printf("  ├ Node: %s\n", current->name);
         }
 
         // if the current node is a folder then list it's children
         if (current->is_folder)
         {
-            //set ansi color to blue
+            // set ansi color to blue
             printf("\033[0;34m");
             // list the children of the current node
             list_children(current->children);
@@ -233,8 +225,6 @@ void list_children(node *head)
         current = current->next;
     }
 }
-
-
 
 /**
  * @brief Executes a terminal program with various options.
@@ -255,11 +245,10 @@ void terminalX(node *head)
     node *current = head;
     node *parent = NULL;
 
-
     // this is the main loop of the "terminal"
     while (1)
     {
-        printf("\n\n\n\n1. Count nodes\n2. tree nodes\n3. Add node\n4. Move node\n5. Inspect noden\n6. Current dir Node \n7. Exit\nEnter your choice: ");
+        printf("\n\n\n\n1. Count nodes\n2. tree nodes\n3. Add node\n4. Move node\n5. Inspect noden\n6. Current dir Node \n7. Create node\n8. Exit\nEnter your choice: ");
         scanf("%d", &choice);
 
         switch (choice)
@@ -290,7 +279,6 @@ void terminalX(node *head)
                 printf("Enter node content: ");
                 scanf("%s", content);
             }
-            
 
             // size generation form 1 to 1000
             printf("generating a random size...\n");
@@ -345,24 +333,44 @@ void terminalX(node *head)
             printf("       Node content \n[%s]\n", node->content);
             break;
         case 6: // move between head and children
-        printf("choose a node to move in: ");
-        scanf("%s", name);
-        printf("\n");
-        parent = find_node(head, name);
-        terminalX(parent);
-
-        case 7: // exit
+            printf("choose a node to move in: ");
+            scanf("%s", name);
+            printf("\n");
+            parent = find_node(head, name);
+            terminalX(parent);
+            break;
+        case 7: // create a new node
+            printf("Enter node name: ");
+            // ask for the name of the node that accepts spaces and special characters
+            scanf(" %[^\n]s", name);
+            // if it is not a folder then ask for the type and content
+            printf("Is it a folder (1 for yes, 0 for no): ");
+            scanf("%d", &is_folder);
+            if (!is_folder)
+            {
+                printf("Enter node type: ");
+                scanf("%s", type);
+                printf("Enter node content: ");
+                scanf("%s", content);
+            }
+            // size generation form 1 to 1000
+            printf("generating a random size...\n");
+            srand(time(NULL));
+            size = rand() % MAX_SIZE + 1;
+            printf("Size generated! %d\n", size);
+            // create the node and add it to the list
+            new_node = create_node(name, is_folder, type, size, content);
+            add_node(&head, new_node);
+            printf("Node added successfully.\n");
+            break;
+        case 8: // exit
             printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nExiting...\n");
             return;
         default: // invalid choice
-            printf("\n\n\n\n\n\n\n\n\n\nInvalid choice. Please enter a number between 1 and 7.\n");
+            printf("\n\n\n\n\n\n\n\n\n\nInvalid choice. Please enter a number between 1 and 8.\n");
         }
     }
 }
-
-
-
-
 
 int main(int argc, char *argv[])
 {
@@ -374,13 +382,13 @@ int main(int argc, char *argv[])
     // Add the 3 random nodes to the list
     printf("Adding the nodes to the list...\n");
     printf("Adding node 1...\n");
-    node *node1 = create_node("Verry funny jokes.txt", 0, "txt", 20, "This is a very funny joke");
+    node *node1 = create_node("Verry funny jokes.txt", 0, "TXT", 20, "This is a very funny joke");
     add_node(&head, node1);
     printf("Adding node 2...\n");
-    node *node2 = create_node("Nobromu.exe", 0, "exe", 2600, "i can't believe it's not a virus");
+    node *node2 = create_node("Nobromu.exe", 0, "EXE", 2600, "i can't believe it's not a virus");
     add_node(&head, node2);
     printf("Adding node 3...\n");
-    node *node3 = create_node("CSteam.png", 0, "png", 303, "This is a steam logo but you can't see it");
+    node *node3 = create_node("CSteam.png", 0, "PNG", 303, "This is a steam logo but you can't see it");
     add_node(&head, node3);
 
     // Add the 3 random nodes to the list inside a folder
@@ -390,13 +398,13 @@ int main(int argc, char *argv[])
     add_node(&head, node4);
     printf("Adding Content in Folder\n");
     printf("Adding node 5...\n");
-    node *node5 = create_node("2am.png", 0, "png", 303, "funny meme");
+    node *node5 = create_node("2am.png", 0, "PNG", 303, "funny meme");
     add_node(&head, node5);
     printf("Adding node 6...\n");
-    node *node6 = create_node("schoolstuff.pdf", 0, "pdf", 153, "This is a pdf file");
+    node *node6 = create_node("schoolstuff.pdf", 0, "PDF", 153, "This is a pdf file");
     add_node(&head, node6);
     printf("Adding node 7...\n");
-    node *node7 = create_node("Cream.png", 0, "png", 1000, "why is this here?");
+    node *node7 = create_node("Cream.png", 0, "PNG", 1000, "why is this here?");
     add_node(&head, node7);
 
     printf("Moving nodes...\n");
